@@ -3,6 +3,7 @@ import cryptoService, { CryptoData, PriceHistory } from '../../services/cryptoSe
 
 export interface CryptoState {
   topCryptos: CryptoData[]
+  topCryptosHasMore: boolean
   selectedCrypto: CryptoData | null
   historicalPrices: PriceHistory[]
   loading: boolean
@@ -14,6 +15,7 @@ export interface CryptoState {
 
 const initialState: CryptoState = {
   topCryptos: [],
+  topCryptosHasMore: true,
   selectedCrypto: null,
   historicalPrices: [],
   loading: false,
@@ -25,8 +27,23 @@ const initialState: CryptoState = {
 
 export const fetchTopCryptos = createAsyncThunk(
   'crypto/fetchTopCryptos',
-  async ({ limit, currency }: { limit: number; currency: string }) => {
-    return await cryptoService.getTopCryptocurrencies(limit, currency)
+  async ({
+    limit,
+    currency,
+    page,
+    append,
+  }: {
+    limit: number
+    currency: string
+    page: number
+    append: boolean
+  }) => {
+    const items = await cryptoService.getTopCryptocurrencies(limit, currency, page)
+    return {
+      items,
+      append,
+      hasMore: items.length === limit,
+    }
   }
 )
 
@@ -66,7 +83,18 @@ const cryptoSlice = createSlice({
         state.error = null
       })
       .addCase(fetchTopCryptos.fulfilled, (state, action) => {
-        state.topCryptos = action.payload
+        if (action.payload.append) {
+          const merged = [...state.topCryptos, ...action.payload.items]
+          const dedupedById = merged.filter(
+            (crypto, index, array) => index === array.findIndex((item) => item.id === crypto.id)
+          )
+
+          state.topCryptos = dedupedById.sort((first, second) => second.market_cap - first.market_cap)
+        } else {
+          state.topCryptos = action.payload.items
+        }
+
+        state.topCryptosHasMore = action.payload.hasMore
         state.loading = false
       })
       .addCase(fetchTopCryptos.rejected, (state, action) => {

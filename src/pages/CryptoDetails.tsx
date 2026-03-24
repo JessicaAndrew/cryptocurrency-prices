@@ -65,7 +65,6 @@ export const CryptoDetails: React.FC = () => {
 
     setActiveTimeframe(days)
     dispatch(setSelectedTimeframe(days))
-    dispatch(fetchHistoricalPrices({ id, days, currency }))
   }
 
   const handleRetry = () => {

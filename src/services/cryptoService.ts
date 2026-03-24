@@ -53,15 +53,35 @@ class CryptoService {
     return null
   }
 
+  private getStaleCache<T>(key: string): T | null {
+    const cached = this.cache.get(key)
+    return cached ? (cached.data as T) : null
+  }
+
   private setCache(key: string, data: unknown): void {
     this.cache.set(key, { data, timestamp: Date.now() })
   }
 
+  private mapHistoricalError(error: unknown, id: string): Error {
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 429) {
+        return new Error(`CoinGecko rate limit hit while fetching history for ${id}. Try again in a moment.`)
+      }
+
+      if (!error.response) {
+        return new Error('Network error while fetching historical prices.')
+      }
+    }
+
+    return new Error(`Failed to fetch price history for ${id}`)
+  }
+
   async getTopCryptocurrencies(
     limit: number = 10,
-    currency: string = 'zar'
+    currency: string = 'zar',
+    page: number = 1
   ): Promise<CryptoData[]> {
-    const cacheKey = `top-${limit}-${currency}`
+    const cacheKey = `top-${limit}-${currency}-${page}`
     const cached = this.getFromCache<CryptoData[]>(cacheKey)
     if (cached) return cached
 
@@ -71,7 +91,7 @@ class CryptoService {
           vs_currency: currency.toLowerCase(),
           order: 'market_cap_desc',
           per_page: limit,
-          page: 1,
+          page,
           sparkline: false,
         },
       })
@@ -162,9 +182,37 @@ class CryptoService {
 
       this.setCache(cacheKey, filteredHistory)
       return filteredHistory
-    } catch (error) {
-      console.error('Error fetching historical prices:', error)
-      throw new Error(`Failed to fetch price history for ${id}`)
+    } catch (rangeError) {
+      try {
+        const fallbackResponse = await this.api.get(`/coins/${id}/market_chart`, {
+          params: {
+            vs_currency: currency.toLowerCase(),
+            days,
+          },
+        })
+
+        const fallbackHistory: PriceHistory[] = fallbackResponse.data.prices.map(
+          ([timestamp, price]: [number, number], index: number) => ({
+            timestamp,
+            price,
+            marketCap: fallbackResponse.data.market_caps?.[index]?.[1] || 0,
+            totalVolume: fallbackResponse.data.total_volumes?.[index]?.[1] || 0,
+          })
+        )
+
+        this.setCache(cacheKey, fallbackHistory)
+        return fallbackHistory
+      } catch (fallbackError) {
+        console.error('Error fetching historical prices:', rangeError)
+        console.error('Fallback historical fetch also failed:', fallbackError)
+
+        const staleData = this.getStaleCache<PriceHistory[]>(cacheKey)
+        if (staleData) {
+          return staleData
+        }
+
+        throw this.mapHistoricalError(fallbackError, id)
+      }
     }
   }
 

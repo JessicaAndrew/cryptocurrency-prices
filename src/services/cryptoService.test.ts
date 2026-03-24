@@ -72,7 +72,7 @@ describe('cryptoService', () => {
       },
     })
 
-    const result = await cryptoService.getHistoricalPrices('bitcoin', 30, 'zar', true)
+    const result = await cryptoService.getHistoricalPrices('bitcoin', 30, 'zar')
 
     expect(result).toHaveLength(1)
     expect(result[0]).toEqual({
@@ -85,12 +85,11 @@ describe('cryptoService', () => {
     nowSpy.mockRestore()
   })
 
-  it('bypasses cache when forceRefresh is true', async () => {
+  it('uses cache for repeated historical price requests', async () => {
     const fixedNowMs = 1_700_000_000_000
     const fixedNowSec = Math.floor(fixedNowMs / 1000)
     const fromSec = fixedNowSec - 7 * 24 * 60 * 60
     const firstTs = (fromSec + 120) * 1000
-    const secondTs = (fromSec + 240) * 1000
 
     const nowSpy = vi.spyOn(Date, 'now').mockReturnValue(fixedNowMs)
 
@@ -102,24 +101,15 @@ describe('cryptoService', () => {
       },
     }
 
-    const secondPayload = {
-      data: {
-        prices: [[secondTs, 20]],
-        market_caps: [[secondTs, 200]],
-        total_volumes: [[secondTs, 2_000]],
-      },
-    }
-
     mockGet
       .mockResolvedValueOnce(firstPayload)
-      .mockResolvedValueOnce(secondPayload)
 
-    const first = await cryptoService.getHistoricalPrices('bitcoin', 7, 'zar', false)
-    const second = await cryptoService.getHistoricalPrices('bitcoin', 7, 'zar', true)
+    const first = await cryptoService.getHistoricalPrices('bitcoin', 7, 'zar')
+    const second = await cryptoService.getHistoricalPrices('bitcoin', 7, 'zar')
 
     expect(first[0].price).toBe(10)
-    expect(second[0].price).toBe(20)
-    expect(mockGet).toHaveBeenCalledTimes(2)
+    expect(second[0].price).toBe(10)
+    expect(mockGet).toHaveBeenCalledTimes(1)
 
     nowSpy.mockRestore()
   })

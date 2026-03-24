@@ -1,21 +1,75 @@
-import { useEffect } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../hooks'
 import { fetchTopCryptos, clearError } from '../features/crypto/cryptoSlice'
 import { CryptoCard } from '../components/CryptoCard'
 import { Loading } from '../components/Loading'
 import { Error } from '../components/Error'
 
+const INITIAL_PAGE_SIZE = 100
+
 export const Dashboard: React.FC = () => {
   const dispatch = useAppDispatch()
-  const { topCryptos, loading, error, currency } = useAppSelector((state) => state.crypto)
+  const { topCryptos, topCryptosHasMore, loading, error, currency } = useAppSelector(
+    (state) => state.crypto
+  )
+  const [currentPage, setCurrentPage] = useState(1)
+  const loadMoreRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
-    dispatch(fetchTopCryptos({ limit: 10, currency }))
-  }, [currency, dispatch])
+    setCurrentPage(1)
+  }, [currency])
+
+  useEffect(() => {
+    dispatch(
+      fetchTopCryptos({
+        limit: INITIAL_PAGE_SIZE,
+        currency,
+        page: currentPage,
+        append: currentPage > 1,
+      })
+    )
+  }, [currency, currentPage, dispatch])
+
+  const handleLoadMore = useCallback(() => {
+    if (loading || !topCryptosHasMore) {
+      return
+    }
+
+    setCurrentPage((prevPage) => prevPage + 1)
+  }, [loading, topCryptosHasMore])
+
+  useEffect(() => {
+    if (!loadMoreRef.current) {
+      return
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries
+        if (entry.isIntersecting) {
+          handleLoadMore()
+        }
+      },
+      { threshold: 0.1 }
+    )
+
+    observer.observe(loadMoreRef.current)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [handleLoadMore])
 
   const handleRetry = () => {
     dispatch(clearError())
-    dispatch(fetchTopCryptos({ limit: 10, currency }))
+    dispatch(
+      fetchTopCryptos({
+        limit: INITIAL_PAGE_SIZE,
+        currency,
+        page: currentPage,
+        append: currentPage > 1,
+      })
+    )
   }
 
   return (
@@ -23,9 +77,10 @@ export const Dashboard: React.FC = () => {
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-crypto-dark via-gray-900 to-crypto-dark py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold mb-2">Top 10 Cryptocurrencies</h2>
+          <h2 className="text-4xl font-bold mb-2">Top Cryptocurrencies by Market Cap</h2>
           <p className="text-gray-400 text-lg">
-            Real-time prices powered by CoinGecko API | All prices in {currency.toUpperCase()}
+            Showing top {topCryptos.length} | Starts at top 100 and loads more as you scroll | All prices in{' '}
+            {currency.toUpperCase()}
           </p>
         </div>
       </section>
@@ -49,6 +104,15 @@ export const Dashboard: React.FC = () => {
             <p className="text-gray-400 text-lg">No cryptocurrencies found</p>
           </div>
         )}
+
+        <div ref={loadMoreRef} className="h-10 flex items-center justify-center mt-8">
+          {loading && topCryptos.length > 0 && (
+            <p className="text-gray-400 text-sm">Loading more cryptocurrencies...</p>
+          )}
+          {!topCryptosHasMore && topCryptos.length > 0 && (
+            <p className="text-gray-500 text-sm">All available cryptocurrencies loaded</p>
+          )}
+        </div>
       </section>
     </div>
   )
