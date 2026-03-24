@@ -5,7 +5,7 @@ import { CryptoCard } from '../components/CryptoCard'
 import { Loading } from '../components/Loading'
 import { Error } from '../components/Error'
 
-const INITIAL_PAGE_SIZE = 100
+const INITIAL_PAGE_SIZE = 10
 
 export const Dashboard: React.FC = () => {
   const dispatch = useAppDispatch()
