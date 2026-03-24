@@ -79,7 +79,7 @@ export const Dashboard: React.FC = () => {
         <div className="max-w-7xl mx-auto">
           <h2 className="text-4xl font-bold mb-2">Top Cryptocurrencies by Market Cap</h2>
           <p className="text-gray-400 text-lg">
-            Showing top {topCryptos.length} | Starts at top 100 and loads more as you scroll | All prices in{' '}
+            Showing top {topCryptos.length} | Starts at top 10 and loads more as you scroll | All prices in{' '}
             {currency.toUpperCase()}
           </p>
         </div>
