@@ -22,6 +22,8 @@ export interface CryptoData {
 export interface PriceHistory {
   timestamp: number
   price: number
+  marketCap: number
+  totalVolume: number
 }
 
 class CryptoService {
@@ -132,21 +134,34 @@ class CryptoService {
     if (cached) return cached
 
     try {
-      const response = await this.api.get(`/coins/${id}/market_chart`, {
+      const to = Math.floor(Date.now() / 1000)
+      const from = to - days * 24 * 60 * 60
+
+      const response = await this.api.get(`/coins/${id}/market_chart/range`, {
         params: {
           vs_currency: currency.toLowerCase(),
-          days,
-          interval: 'daily',
+          from,
+          to,
         },
       })
       const priceHistory: PriceHistory[] = response.data.prices.map(
-        ([timestamp, price]: [number, number]) => ({
+        ([timestamp, price]: [number, number], index: number) => ({
           timestamp,
           price,
+          marketCap: response.data.market_caps?.[index]?.[1] || 0,
+          totalVolume: response.data.total_volumes?.[index]?.[1] || 0,
         })
       )
-      this.setCache(cacheKey, priceHistory)
-      return priceHistory
+
+      const minTimestamp = from * 1000
+      const maxTimestamp = to * 1000
+
+      const filteredHistory = priceHistory
+        .filter((point) => point.timestamp >= minTimestamp && point.timestamp <= maxTimestamp)
+        .sort((first, second) => first.timestamp - second.timestamp)
+
+      this.setCache(cacheKey, filteredHistory)
+      return filteredHistory
     } catch (error) {
       console.error('Error fetching historical prices:', error)
       throw new Error(`Failed to fetch price history for ${id}`)

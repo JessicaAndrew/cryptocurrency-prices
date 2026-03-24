@@ -9,6 +9,7 @@ export interface CryptoState {
   error: string | null
   currency: string
   selectedTimeframe: number
+  historyRequestId: string | null
 }
 
 const initialState: CryptoState = {
@@ -19,6 +20,7 @@ const initialState: CryptoState = {
   error: null,
   currency: 'zar',
   selectedTimeframe: 30,
+  historyRequestId: null,
 }
 
 export const fetchTopCryptos = createAsyncThunk(
@@ -89,17 +91,26 @@ const cryptoSlice = createSlice({
 
     // fetchHistoricalPrices
     builder
-      .addCase(fetchHistoricalPrices.pending, (state) => {
+      .addCase(fetchHistoricalPrices.pending, (state, action) => {
         state.loading = true
         state.error = null
+        state.historyRequestId = action.meta.requestId
       })
       .addCase(fetchHistoricalPrices.fulfilled, (state, action) => {
+        if (state.historyRequestId !== action.meta.requestId) {
+          return
+        }
         state.historicalPrices = action.payload
         state.loading = false
+        state.historyRequestId = null
       })
       .addCase(fetchHistoricalPrices.rejected, (state, action) => {
+        if (state.historyRequestId !== action.meta.requestId) {
+          return
+        }
         state.loading = false
         state.error = action.error.message || 'Failed to fetch price history'
+        state.historyRequestId = null
       })
   },
 })

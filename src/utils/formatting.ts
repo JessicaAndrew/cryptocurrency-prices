@@ -27,11 +27,14 @@ export const formatLargeNumber = (num: number, currency: string = 'ZAR'): string
   }
 
   const symbol = currencySymbols[currency.toUpperCase()] || currency.toUpperCase()
+  const absNum = Math.abs(num)
+  const sign = num < 0 ? '-' : ''
 
-  if (num >= 1e9) return `${symbol}${(num / 1e9).toFixed(2)}B`
-  if (num >= 1e6) return `${symbol}${(num / 1e6).toFixed(2)}M`
-  if (num >= 1e3) return `${symbol}${(num / 1e3).toFixed(2)}K`
-  return `${symbol}${num.toFixed(2)}`
+  if (absNum >= 1e12) return `${sign}${symbol}${(absNum / 1e12).toFixed(2)}T`
+  if (absNum >= 1e9) return `${sign}${symbol}${(absNum / 1e9).toFixed(2)}B`
+  if (absNum >= 1e6) return `${sign}${symbol}${(absNum / 1e6).toFixed(2)}M`
+  if (absNum >= 1e3) return `${sign}${symbol}${(absNum / 1e3).toFixed(2)}K`
+  return `${sign}${symbol}${absNum.toFixed(2)}`
 }
 
 export const formatPercent = (percent: number): string => {

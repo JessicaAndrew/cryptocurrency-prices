@@ -24,6 +24,14 @@ const TIMEFRAMES = [
   { label: '1Y', days: 365 },
 ]
 
+type ChartMetric = 'price' | 'marketCap' | 'totalVolume'
+
+const CHART_OPTIONS: Array<{ label: string; metric: ChartMetric; title: string }> = [
+  { label: 'Price', metric: 'price', title: 'Price History' },
+  { label: 'Market Cap', metric: 'marketCap', title: 'Market Cap History' },
+  { label: 'Volume', metric: 'totalVolume', title: 'Trading Volume History' },
+]
+
 export const CryptoDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -31,6 +39,7 @@ export const CryptoDetails: React.FC = () => {
   const { selectedCrypto, historicalPrices, loading, error, currency, selectedTimeframe } =
     useAppSelector((state) => state.crypto)
   const [activeTimeframe, setActiveTimeframe] = useState(selectedTimeframe)
+  const [activeChartMetric, setActiveChartMetric] = useState<ChartMetric>('price')
 
   useEffect(() => {
     if (!id) {
@@ -39,12 +48,24 @@ export const CryptoDetails: React.FC = () => {
     }
 
     dispatch(fetchCryptoDetails({ id, currency }))
+  }, [id, currency, dispatch, navigate])
+
+  useEffect(() => {
+    if (!id) {
+      return
+    }
+
     dispatch(fetchHistoricalPrices({ id, days: activeTimeframe, currency }))
-  }, [id, currency, dispatch, navigate, activeTimeframe])
+  }, [id, currency, dispatch, activeTimeframe])
 
   const handleTimeframeChange = (days: number) => {
+    if (!id || days === activeTimeframe) {
+      return
+    }
+
     setActiveTimeframe(days)
     dispatch(setSelectedTimeframe(days))
+    dispatch(fetchHistoricalPrices({ id, days, currency }))
   }
 
   const handleRetry = () => {
@@ -80,6 +101,7 @@ export const CryptoDetails: React.FC = () => {
   }
 
   const isPositive = selectedCrypto.price_change_percentage_24h >= 0
+  const selectedChart = CHART_OPTIONS.find((option) => option.metric === activeChartMetric)
 
   return (
     <div className="min-h-screen bg-crypto-darker">
@@ -194,9 +216,25 @@ export const CryptoDetails: React.FC = () => {
           </div>
         </div>
 
-        {/* Price Chart Section */}
+        {/* Historical Charts Section */}
         <div className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">Price History</h2>
+          <h2 className="text-2xl font-bold mb-6">Historical Data</h2>
+
+          <div className="flex gap-3 mb-6 flex-wrap">
+            {CHART_OPTIONS.map((option) => (
+              <button
+                key={option.metric}
+                onClick={() => setActiveChartMetric(option.metric)}
+                className={`px-4 py-2 rounded font-medium transition ${
+                  activeChartMetric === option.metric
+                    ? 'bg-crypto-primary text-white'
+                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-700'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
 
           {/* Timeframe Selector */}
           <div className="flex gap-3 mb-6 flex-wrap">
@@ -215,8 +253,16 @@ export const CryptoDetails: React.FC = () => {
             ))}
           </div>
 
-          {/* Chart */}
-          <PriceChart data={historicalPrices} currency={currency} isLoading={loading} />
+          {selectedChart && (
+            <PriceChart
+              data={historicalPrices}
+              currency={currency}
+              metric={selectedChart.metric}
+              title={selectedChart.title}
+              timeframeDays={activeTimeframe}
+              isLoading={loading}
+            />
+          )}
         </div>
       </section>
     </div>
