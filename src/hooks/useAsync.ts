@@ -1,0 +1,45 @@
+import { useEffect, useState } from 'react'
+
+interface UseAsyncState<T> {
+  data: T | null
+  loading: boolean
+  error: Error | null
+}
+
+/**
+ * Custom hook for async operations
+ * Usage: const { data, loading, error } = useAsync(() => fetchData(), [dependency])
+ */
+export function useAsync<T>(
+  asyncFunction: () => Promise<T>,
+  immediate: boolean = true,
+  deps?: React.DependencyList
+): UseAsyncState<T> {
+  const [state, setState] = useState<UseAsyncState<T>>({
+    data: null,
+    loading: immediate,
+    error: null,
+  })
+
+  const execute = async () => {
+    setState({ data: null, loading: true, error: null })
+    try {
+      const response = await asyncFunction()
+      setState({ data: response, loading: false, error: null })
+    } catch (error) {
+      setState({
+        data: null,
+        loading: false,
+        error: error instanceof Error ? error : new Error('Unknown error'),
+      })
+    }
+  }
+
+  useEffect(() => {
+    if (immediate) {
+      execute()
+    }
+  }, deps)
+
+  return state
+}
