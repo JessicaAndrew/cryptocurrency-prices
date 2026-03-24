@@ -1,11 +1,11 @@
 # CryptoPrices - Live Cryptocurrency Tracker
 
-A modern, responsive React + TypeScript application that displays live cryptocurrency prices using the CoinGecko API. Track the top 10 cryptocurrencies by market cap, view detailed information, and analyze historical price trends.
+A modern, responsive React + TypeScript application that displays live cryptocurrency prices using the CoinGecko API. Track the top cryptocurrencies by market cap, view detailed information, and analyze historical price trends.
 
 ## Features
 
 ### Core Features
-- **Dashboard**: Display top 10 cryptocurrencies by market cap with real-time prices
+- **Dashboard**: Display top cryptocurrencies by market cap with real-time prices
 - **Cryptocurrency Details Page**: Comprehensive information about each cryptocurrency
 - **Real-time Price Tracking**: Live prices updated from CoinGecko API
 - **Price Charts**: Interactive Recharts visualization of historical price data
