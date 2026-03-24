@@ -180,6 +180,40 @@ export const CryptoDetails: React.FC = () => {
           </div>
         </div>
 
+        {/* Supply and Valuation Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <p className="text-gray-400 text-sm font-medium mb-2">Max Supply</p>
+            <p className="text-2xl font-bold">
+              {selectedCrypto.max_supply > 0
+                ? selectedCrypto.max_supply.toLocaleString('en-US', {
+                    maximumFractionDigits: 0,
+                  })
+                : 'N/A'}
+            </p>
+          </div>
+          
+          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <p className="text-gray-400 text-sm font-medium mb-2">Fully Diluted Valuation</p>
+            <p className="text-2xl font-bold">
+              {selectedCrypto.fully_diluted_valuation > 0
+                ? formatLargeNumber(selectedCrypto.fully_diluted_valuation, currency)
+                : 'N/A'}
+            </p>
+          </div>
+
+          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <p className="text-gray-400 text-sm font-medium mb-2">Total Supply</p>
+            <p className="text-2xl font-bold">
+              {selectedCrypto.total_supply > 0
+                ? selectedCrypto.total_supply.toLocaleString('en-US', {
+                    maximumFractionDigits: 0,
+                  })
+                : 'N/A'}
+            </p>
+          </div>
+        </div>
+
         {/* Price Range and Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
           <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">

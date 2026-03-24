@@ -15,6 +15,8 @@ export interface CryptoData {
   price_change_percentage_24h: number
   circulating_supply: number
   total_supply: number
+  max_supply: number
+  fully_diluted_valuation: number
   ath: number
   atl: number
 }
@@ -133,6 +135,9 @@ class CryptoService {
         price_change_percentage_24h: response.data.market_data?.price_change_percentage_24h || 0,
         circulating_supply: response.data.market_data?.circulating_supply || 0,
         total_supply: response.data.market_data?.total_supply || 0,
+        max_supply: response.data.market_data?.max_supply || 0,
+        fully_diluted_valuation:
+          response.data.market_data?.fully_diluted_valuation?.[currency.toLowerCase()] || 0,
         ath: response.data.market_data?.ath?.[currency.toLowerCase()] || 0,
         atl: response.data.market_data?.atl?.[currency.toLowerCase()] || 0,
       }
