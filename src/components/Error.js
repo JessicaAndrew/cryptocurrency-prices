@@ -1,2 +1,0 @@
-import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-export const Error = ({ message, onRetry }) => (_jsxs("div", { className: "bg-red-900/20 border border-red-600 rounded-lg p-6 my-6", children: [_jsx("div", { className: "text-red-400 font-semibold mb-2", children: "\u26A0 Error" }), _jsx("p", { className: "text-red-300 mb-4", children: message }), onRetry && (_jsx("button", { onClick: onRetry, className: "bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded transition", children: "Try Again" }))] }));

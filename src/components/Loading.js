@@ -1,2 +1,0 @@
-import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-export const Loading = ({ message = 'Loading...' }) => (_jsx("div", { className: "flex items-center justify-center py-16", children: _jsxs("div", { className: "text-center", children: [_jsx("div", { className: "inline-block animate-spin text-4xl mb-4", children: "\u27F3" }), _jsx("p", { className: "text-gray-400 text-lg", children: message })] }) }));
