@@ -209,12 +209,109 @@ This reduces API calls while keeping data relatively fresh.
 
 ## API Reference
 
-### CoinGecko API Endpoints Used
-- `/coins/markets` - Top cryptocurrencies by market cap
-- `/coins/{id}` - Detailed information for a cryptocurrency
-- `/coins/{id}/market_chart` - Historical price data
+### CoinGecko API Integration
 
-All API calls are made to `https://api.coingecko.com/api/v3`
+**Base URL**
+
+`https://api.coingecko.com/api/v3`
+
+**Authentication**
+
+CoinGecko API does not require authentication for the free tier. Rate limits apply.
+
+**Rate Limits**
+
+- Free tier: 10-50 calls/minute depending on endpoint
+- This app uses 5-minute caching to minimize API calls
+
+### Endpoints Used
+
+#### 1) Get Top Cryptocurrencies
+
+**Endpoint:** `GET /coins/markets`
+
+**Parameters:**
+
+- `vs_currency` (string): target currency (for example `zar`, `usd`)
+- `order` (string): `market_cap_desc`
+- `per_page` (number): number of results
+- `page` (number): page number
+- `sparkline` (boolean): include sparkline data
+
+**Usage:**
+
+```typescript
+const cryptos = await cryptoService.getTopCryptocurrencies(10, 'zar')
+```
+
+#### 2) Get Cryptocurrency Details
+
+**Endpoint:** `GET /coins/{id}`
+
+**Parameters:**
+
+- `id` (string): coin id (for example `bitcoin`, `ethereum`)
+- `vs_currency` (string): target currency
+- `localization` (boolean): localized fields toggle
+
+**Usage:**
+
+```typescript
+const details = await cryptoService.getCryptoDetails('bitcoin', 'zar')
+```
+
+#### 3) Get Historical Price Data
+
+**Endpoint:** `GET /coins/{id}/market_chart`
+
+**Parameters:**
+
+- `id` (string): coin id
+- `vs_currency` (string): target currency
+- `days` (number): 1, 7, 30, 365, or `max`
+- `interval` (string): `daily`
+
+**Usage:**
+
+```typescript
+const history = await cryptoService.getHistoricalPrices('bitcoin', 30, 'zar')
+```
+
+### Caching Details
+
+The service caches all API responses for 5 minutes to:
+
+1. Reduce API usage and avoid rate limits
+2. Improve UI responsiveness
+3. Provide resilience during temporary network issues
+
+**Cache keys:**
+
+- `top-{limit}-{currency}`
+- `details-{id}-{currency}`
+- `history-{id}-{days}-{currency}`
+
+**Invalidation:**
+
+- Manual: `cryptoService.clearCache()`
+- Automatic: cache expiry after 5 minutes
+
+### Error Handling and Rate Limiting
+
+All API methods throw explicit errors and are handled in Redux async thunks.
+
+If HTTP `429` rate limiting occurs:
+
+1. Request throws
+2. Redux stores error state
+3. UI displays retry action
+4. Retry after 1-2 minutes
+
+### API References
+
+- [CoinGecko API Documentation](https://docs.coingecko.com/reference/introduction)
+- [CoinGecko Free API Plan](https://www.coingecko.com/en/api)
+- [CoinGecko Status Page](https://status.coingecko.com/)
 
 ## Browser Support
 
@@ -264,12 +361,100 @@ npm run build       # Try building
 
 ## Contributing
 
-When contributing:
-1. Follow the existing code structure
-2. Use TypeScript with strict typing
-3. Write clear commit messages
-4. Test in development mode
-5. Ensure responsive design works
+Thanks for contributing. Follow this process to keep the codebase clean and consistent.
+
+### Development Setup
+
+```bash
+git clone <repository-url>
+cd cryptocurrency-prices
+npm install
+npm run dev
+```
+
+### Code Standards
+
+- Use TypeScript and avoid `any`
+- Keep components small and single-purpose
+- Prefer reusable logic in hooks/utilities/services
+- Follow existing naming and folder conventions
+
+### Branching and Commits
+
+Create focused branches:
+
+```bash
+git checkout -b feat/feature-name
+# or
+git checkout -b fix/bug-name
+```
+
+Use conventional commits:
+
+```text
+feat: add currency search input
+fix: resolve chart tooltip overflow on mobile
+refactor: simplify crypto service caching logic
+docs: update API integration section
+style: format files with prettier
+test: add unit tests for formatting utils
+```
+
+### Validation Before PR
+
+```bash
+npm run type-check
+npm run lint
+npm run build
+```
+
+### PR Checklist
+
+- [ ] Compiles without errors
+- [ ] Lint passes
+- [ ] Loading and error states handled
+- [ ] Responsive behavior verified
+- [ ] Commit messages are clear
+- [ ] README updated (if behavior changed)
+
+### Common Contribution Tasks
+
+1) **Add API endpoint** in `src/services/cryptoService.ts`
+
+2) **Add async thunk and reducers** in `src/features/crypto/cryptoSlice.ts`
+
+3) **Add/update UI** in `src/components` or `src/pages`
+
+4) **Add formatting/helpers** in `src/utils`
+
+5) Re-run type-check, lint, and build
+
+### Debugging Tips
+
+- Use browser DevTools Network tab for API requests
+- Use Redux DevTools for state transitions
+- Use React DevTools for component tree and renders
+
+### Common Issues
+
+**Dependencies broken**
+
+```bash
+rm -rf node_modules package-lock.json
+npm install
+```
+
+**Type errors**
+
+```bash
+npm run type-check
+```
+
+**Styling issues**
+
+- Verify Tailwind classes and config
+- Ensure `src/index.css` includes Tailwind directives
+- Clear stale build output when needed
 
 ## License
 
