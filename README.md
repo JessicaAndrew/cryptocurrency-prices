@@ -90,6 +90,11 @@ npm run build
 npm run preview
 ```
 
+### Run tests
+```bash
+npm test
+```
+
 ## Usage
 
 ### Dashboard
